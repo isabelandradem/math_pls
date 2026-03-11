@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Performance Level Distribution Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Inter:wght@400;600&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: #231f20;
+      background: #f5f5f5;
+      padding: 32px;
+    }
+
+    h1 {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 24px;
+      color: #231f20;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #6b6b6b;
+      margin-bottom: 24px;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      background: #e9e9e9;
+      color: #6b6b6b;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .tab:hover { background: #ddd; }
+
+    .tab.active {
+      background: #fff;
+      color: #231f20;
+      box-shadow: 0 -1px 4px rgba(0,0,0,0.06);
+    }
+
+    .report-card {
+      background: #fff;
+      border: 1px solid #e9e9e9;
+      border-radius: 8px;
+      padding: 20px;
+      width: 100%;
+      max-width: 900px;
+      display: none;
+    }
+
+    .report-card.visible { display: block; }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      padding-bottom: 8px;
+    }
+
+    .col-domain {
+      width: 200px;
+      flex-shrink: 0;
+      padding: 0 8px;
+    }
+
+    .header-domain {
+      font-weight: 400;
+      font-size: 16px;
+    }
+
+    .cells-group {
+      display: flex;
+      gap: 2px;
+      flex: 1;
+      padding-right: 8px;
+    }
+
+    .header-cell {
+      width: 160px;
+      flex-shrink: 0;
+      text-align: center;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .header-cell.pink   { color: #EF6693; }
+    .header-cell.purple { color: #A47FBB; }
+    .header-cell.blue   { color: #47B6CE; }
+    .header-cell.teal   { color: #13BF96; }
+
+    .header-divider {
+      height: 1px;
+      background: #e9e9e9;
+    }
+
+    .data-row {
+      display: flex;
+      align-items: center;
+      padding: 16px 0;
+    }
+
+    .domain-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .domain-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: #231f20;
+    }
+
+    .data-cell {
+      width: 160px;
+      height: 34px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 400;
+      font-size: 13px;
+      color: #231f20;
+      white-space: nowrap;
+    }
+
+    .data-cell.highlighted {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .data-cell.empty {
+      background: #f5f5f5;
+      color: #c0c0c0;
+    }
+
+    .data-cell.pink            { background: #F9C1D4; }
+    .data-cell.pink.highlighted  { background: #EF6693; }
+    .data-cell.purple          { background: #DBCBE4; }
+    .data-cell.purple.highlighted { background: #A47FBB; }
+    .data-cell.blue            { background: #B6E2EB; }
+    .data-cell.blue.highlighted  { background: #47B6CE; }
+    .data-cell.teal            { background: #A2E5D6; }
+    .data-cell.teal.highlighted  { background: #13BF96; }
+
+    .row-divider {
+      height: 1px;
+      background: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Performance Level Distribution — (Original Cutoffs)</h1>
+  <p class="subtitle">Math assessments · Ages 3 &amp; 4 only</p>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('age3')">Age 3</button>
+    <button class="tab" onclick="showTab('age4')">Age 4</button>
+    <button class="tab" onclick="showTab('total')">Total (Ages 3 &amp; 4)</button>
+  </div>
+
+  <div class="report-card visible" id="card-age3"></div>
+  <div class="report-card" id="card-age4"></div>
+  <div class="report-card" id="card-total"></div>
+
+  <script>
+    const COLUMNS = [
+      { label: 'Age 2 Skills', key: '2YO', color: 'pink' },
+      { label: 'Age 3 Skills', key: '3YO', color: 'purple' },
+      { label: 'Age 4 Skills', key: '4YO', color: 'blue' },
+      { label: 'Kinder Skills', key: 'KG', color: 'teal' },
+    ];
+
+    const ASSESSMENTS = [
+      {
+        id: 'MAT9', name: 'Shapes',
+        levels: ['2YO','3YO','4YO','KG'],
+        age3: { counts: [64,42,23,18], total: 147 },
+        age4: { counts: [77,146,108,97], total: 428 },
+        combined: { counts: [141,188,131,115], total: 575 },
+      },
+      {
+        id: 'MAT4', name: 'More or Less',
+        levels: ['2YO','3YO','4YO','KG'],
+        age3: { counts: [57,39,8,2], total: 106 },
+        age4: { counts: [138,111,52,69], total: 370 },
+        combined: { counts: [195,150,60,71], total: 476 },
+      },
+      {
+        id: 'MAT3', name: 'Count 1 by 1',
+        levels: ['2YO','3YO','4YO','KG'],
+        age3: { counts: [57,23,18,7], total: 105 },
+        age4: { counts: [60,95,83,54], total: 292 },
+        combined: { counts: [117,118,101,61], total: 397 },
+      },
+      {
+        id: 'MAT10', name: 'Position of Objects',
+        levels: ['3YO','4YO','KG'],
+        age3: { counts: [37,52,43], total: 132 },
+        age4: { counts: [75,138,181], total: 394 },
+        combined: { counts: [112,190,224], total: 526 },
+      },
+      {
+        id: 'MAT8', name: 'Measurement',
+        levels: ['3YO','4YO','KG'],
+        age3: { counts: [26,92,19], total: 137 },
+        age4: { counts: [52,232,147], total: 431 },
+        combined: { counts: [78,324,166], total: 568 },
+      },
+      {
+        id: 'MAT2', name: 'Subitizing',
+        levels: ['3YO','4YO','KG'],
+        age3: { counts: [53,22,12], total: 87 },
+        age4: { counts: [108,83,88], total: 279 },
+        combined: { counts: [161,105,100], total: 366 },
+      },
+      {
+        id: 'MAT5', name: 'Numerals',
+        levels: ['3YO','4YO','KG'],
+        age3: { counts: [96,24,14], total: 134 },
+        age4: { counts: [179,182,54], total: 415 },
+        combined: { counts: [275,206,68], total: 549 },
+      },
+      {
+        id: 'MAT7', name: 'Patterns',
+        levels: ['3YO','4YO','KG'],
+        age3: { counts: [59,43,20], total: 122 },
+        age4: { counts: [110,132,149], total: 391 },
+        combined: { counts: [169,175,169], total: 513 },
+      },
+      {
+        id: 'MAT6a', name: 'Add',
+        levels: ['4YO','KG'],
+        age3: { counts: [110,14], total: 124 },
+        age4: { counts: [283,81], total: 364 },
+        combined: { counts: [393,95], total: 488 },
+      },
+      {
+        id: 'MAT6b', name: 'Subtract',
+        levels: ['4YO','KG'],
+        age3: { counts: [106,14], total: 120 },
+        age4: { counts: [258,84], total: 342 },
+        combined: { counts: [364,98], total: 462 },
+      },
+    ];
+
+    function getCells(assessment, ageKey) {
+      const data = assessment[ageKey];
+      const cells = [];
+
+      for (const col of COLUMNS) {
+        const idx = assessment.levels.indexOf(col.key);
+        if (idx === -1) {
+          cells.push(null);
+        } else {
+          const count = data.counts[idx];
+          const total = data.total;
+          const pct = total > 0 ? count / total : 0;
+          cells.push({ pct, count, total });
+        }
+      }
+
+      const maxPct = Math.max(...cells.filter(c => c !== null).map(c => c.pct));
+      return cells.map(c => {
+        if (c === null) return null;
+        return { ...c, highlighted: c.pct === maxPct && c.pct > 0 };
+      });
+    }
+
+    function formatCell(cell, highlighted) {
+      const pct = Math.ceil(cell.pct * 100);
+      if (highlighted) {
+        return `<b>${pct}% (${cell.count} of ${cell.total})</b>`;
+      }
+      return `${pct}% (${cell.count} of ${cell.total})`;
+    }
+
+    function renderCard(containerId, ageKey) {
+      const el = document.getElementById(containerId);
+      let html = '';
+
+      html += '<div class="header-row">';
+      html += '  <div class="col-domain header-domain">Assessment Scale</div>';
+      html += '  <div class="cells-group">';
+      for (const col of COLUMNS) {
+        html += `<div class="header-cell ${col.color}">${col.label}</div>`;
+      }
+      html += '  </div>';
+      html += '</div>';
+      html += '<div class="header-divider"></div>';
+
+      for (const assessment of ASSESSMENTS) {
+        const cells = getCells(assessment, ageKey);
+
+        html += '<div class="data-row">';
+        html += '  <div class="col-domain">';
+        html += '    <div class="domain-label">';
+        html += `      <span class="domain-name">${assessment.name}</span>`;
+        html += '    </div>';
+        html += '  </div>';
+        html += '  <div class="cells-group">';
+        for (let i = 0; i < cells.length; i++) {
+          const cell = cells[i];
+          const color = COLUMNS[i].color;
+          if (cell === null) {
+            html += `<div class="data-cell empty">—</div>`;
+          } else {
+            const hl = cell.highlighted ? ' highlighted' : '';
+            html += `<div class="data-cell ${color}${hl}">${formatCell(cell, cell.highlighted)}</div>`;
+          }
+        }
+        html += '  </div>';
+        html += '</div>';
+        html += '<div class="row-divider"></div>';
+      }
+
+      el.innerHTML = html;
+    }
+
+    function showTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.report-card').forEach(c => c.classList.remove('visible'));
+
+      const tabs = { age3: 0, age4: 1, total: 2 };
+      document.querySelectorAll('.tab')[tabs[tab]].classList.add('active');
+      document.getElementById(`card-${tab}`).classList.add('visible');
+    }
+
+    renderCard('card-age3', 'age3');
+    renderCard('card-age4', 'age4');
+    renderCard('card-total', 'combined');
+  </script>
+</body>
+</html>
