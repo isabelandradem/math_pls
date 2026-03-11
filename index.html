@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Inter:wght@400;600&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -39,6 +40,7 @@
       display: flex;
       gap: 4px;
       margin-bottom: 20px;
+      max-width: 900px;
     }
 
     .tab {
@@ -174,21 +176,45 @@
       height: 1px;
       background: #f2f2f2;
     }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    .chart-card {
+      background: #fff;
+      border: 1px solid #e9e9e9;
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+
+    .chart-card h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: #231f20;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
-  <h1>Performance Level Distribution — (Original Cutoffs)</h1>
+  <h1>Performance Level Distribution</h1>
   <p class="subtitle">Math assessments · Ages 3 &amp; 4 only</p>
 
   <div class="tab-bar">
     <button class="tab active" onclick="showTab('age3')">Age 3</button>
     <button class="tab" onclick="showTab('age4')">Age 4</button>
     <button class="tab" onclick="showTab('total')">Total (Ages 3 &amp; 4)</button>
+    <span style="margin-left:auto"></span>
+    <button class="tab" onclick="showTab('charts')">Bar Charts</button>
   </div>
 
   <div class="report-card visible" id="card-age3"></div>
   <div class="report-card" id="card-age4"></div>
   <div class="report-card" id="card-total"></div>
+  <div id="card-charts" class="charts-grid" style="display:none; max-width:900px;"></div>
 
   <script>
     const COLUMNS = [
@@ -200,74 +226,124 @@
 
     const ASSESSMENTS = [
       {
-        id: 'MAT9', name: 'Shapes',
+        id: 'MAT9', name: 'MAT9: Shapes',
         levels: ['2YO','3YO','4YO','KG'],
-        age3: { counts: [64,42,23,18], total: 147 },
-        age4: { counts: [77,146,108,97], total: 428 },
-        combined: { counts: [141,188,131,115], total: 575 },
+        age3: { counts: [77,30,22,18], total: 147 },
+        age4: { counts: [138,112,92,86], total: 428 },
+        combined: { counts: [215,142,114,104], total: 575 },
+        hasBlue: true,
+        orange: {
+          levels: ['2YO','3YO','4YO','KG'],
+          age3: { counts: [77,30,22,18], total: 147 },
+          age4: { counts: [138,112,92,86], total: 428 },
+        },
+        blue: {
+          levels: ['2YO','3YO','4YO','KG'],
+          age3: { counts: [64,42,23,18], total: 147 },
+          age4: { counts: [77,146,108,97], total: 428 },
+        },
       },
       {
-        id: 'MAT4', name: 'More or Less',
+        id: 'MAT4', name: 'MAT4: More or Less',
         levels: ['2YO','3YO','4YO','KG'],
         age3: { counts: [57,39,8,2], total: 106 },
         age4: { counts: [138,111,52,69], total: 370 },
         combined: { counts: [195,150,60,71], total: 476 },
+        hasBlue: false,
       },
       {
-        id: 'MAT3', name: 'Count 1 by 1',
+        id: 'MAT3', name: 'MAT3: Count 1 by 1',
         levels: ['2YO','3YO','4YO','KG'],
-        age3: { counts: [57,23,18,7], total: 105 },
-        age4: { counts: [60,95,83,54], total: 292 },
-        combined: { counts: [117,118,101,61], total: 397 },
+        age3: { counts: [65,24,10,6], total: 105 },
+        age4: { counts: [94,94,57,47], total: 292 },
+        combined: { counts: [159,118,67,53], total: 397 },
+        hasBlue: true,
+        orange: {
+          levels: ['2YO','3YO','4YO','KG'],
+          age3: { counts: [65,24,10,6], total: 105 },
+          age4: { counts: [94,94,57,47], total: 292 },
+        },
+        blue: {
+          levels: ['2YO','3YO','4YO','KG'],
+          age3: { counts: [57,23,18,7], total: 105 },
+          age4: { counts: [60,95,83,54], total: 292 },
+        },
       },
       {
-        id: 'MAT10', name: 'Position of Objects',
+        id: 'MAT10', name: 'MAT10: Position of Objects',
         levels: ['3YO','4YO','KG'],
         age3: { counts: [37,52,43], total: 132 },
         age4: { counts: [75,138,181], total: 394 },
         combined: { counts: [112,190,224], total: 526 },
+        hasBlue: false,
       },
       {
-        id: 'MAT8', name: 'Measurement',
+        id: 'MAT8', name: 'MAT8: Measurement',
         levels: ['3YO','4YO','KG'],
-        age3: { counts: [26,92,19], total: 137 },
-        age4: { counts: [52,232,147], total: 431 },
-        combined: { counts: [78,324,166], total: 568 },
+        age3: { counts: [51,79,7], total: 137 },
+        age4: { counts: [123,229,79], total: 431 },
+        combined: { counts: [174,308,86], total: 568 },
+        hasBlue: true,
+        orange: {
+          levels: ['3YO','4YO','KG'],
+          age3: { counts: [51,79,7], total: 137 },
+          age4: { counts: [123,229,79], total: 431 },
+        },
+        blue: {
+          levels: ['3YO','4YO','KG'],
+          age3: { counts: [26,92,19], total: 137 },
+          age4: { counts: [52,232,147], total: 431 },
+        },
       },
       {
-        id: 'MAT2', name: 'Subitizing',
+        id: 'MAT2', name: 'MAT2: Subitizing',
         levels: ['3YO','4YO','KG'],
         age3: { counts: [53,22,12], total: 87 },
         age4: { counts: [108,83,88], total: 279 },
         combined: { counts: [161,105,100], total: 366 },
+        hasBlue: false,
       },
       {
-        id: 'MAT5', name: 'Numerals',
+        id: 'MAT5', name: 'MAT5: Numerals',
         levels: ['3YO','4YO','KG'],
         age3: { counts: [96,24,14], total: 134 },
         age4: { counts: [179,182,54], total: 415 },
         combined: { counts: [275,206,68], total: 549 },
+        hasBlue: false,
       },
       {
-        id: 'MAT7', name: 'Patterns',
+        id: 'MAT7', name: 'MAT7: Patterns',
         levels: ['3YO','4YO','KG'],
-        age3: { counts: [59,43,20], total: 122 },
-        age4: { counts: [110,132,149], total: 391 },
-        combined: { counts: [169,175,169], total: 513 },
+        age3: { counts: [90,17,15], total: 122 },
+        age4: { counts: [219,58,114], total: 391 },
+        combined: { counts: [309,75,129], total: 513 },
+        hasBlue: true,
+        orange: {
+          levels: ['3YO','4YO','KG'],
+          age3: { counts: [90,17,15], total: 122 },
+          age4: { counts: [219,58,114], total: 391 },
+        },
+        blue: {
+          levels: ['3YO','4YO','KG'],
+          age3: { counts: [59,43,20], total: 122 },
+          age4: { counts: [110,132,149], total: 391 },
+        },
       },
       {
-        id: 'MAT6a', name: 'Add',
+        id: 'MAT6a', name: 'MAT6a: Add',
         levels: ['4YO','KG'],
         age3: { counts: [110,14], total: 124 },
         age4: { counts: [283,81], total: 364 },
         combined: { counts: [393,95], total: 488 },
+        hasBlue: false,
       },
       {
-        id: 'MAT6b', name: 'Subtract',
+        id: 'MAT6b', name: 'MAT6b: Subtract',
         levels: ['4YO','KG'],
         age3: { counts: [106,14], total: 120 },
         age4: { counts: [258,84], total: 342 },
         combined: { counts: [364,98], total: 462 },
+        hasBlue: false,
       },
     ];
 
@@ -295,7 +371,7 @@
     }
 
     function formatCell(cell, highlighted) {
-      const pct = Math.ceil(cell.pct * 100);
+      const pct = Math.round(cell.pct * 100);
       if (highlighted) {
         return `<b>${pct}% (${cell.count} of ${cell.total})</b>`;
       }
@@ -305,6 +381,8 @@
     function renderCard(containerId, ageKey) {
       const el = document.getElementById(containerId);
       let html = '';
+
+      html += '<p style="font-size:12px; color:#6b6b6b; margin-bottom:12px; font-style:italic;">Performance levels calculated using Orange (default) cutoffs.</p>';
 
       html += '<div class="header-row">';
       html += '  <div class="col-domain header-domain">Assessment Scale</div>';
@@ -347,10 +425,160 @@
     function showTab(tab) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.report-card').forEach(c => c.classList.remove('visible'));
+      document.getElementById('card-charts').style.display = 'none';
 
-      const tabs = { age3: 0, age4: 1, total: 2 };
+      const tabs = { age3: 0, age4: 1, total: 2, charts: 3 };
       document.querySelectorAll('.tab')[tabs[tab]].classList.add('active');
-      document.getElementById(`card-${tab}`).classList.add('visible');
+
+      if (tab === 'charts') {
+        document.getElementById('card-charts').style.display = 'grid';
+        renderCharts();
+      } else {
+        document.getElementById(`card-${tab}`).classList.add('visible');
+      }
+    }
+
+    const LEVEL_LABELS = { '2YO': 'Age 2 Skills', '3YO': 'Age 3 Skills', '4YO': 'Age 4 Skills', 'KG': 'Kinder Skills' };
+    const ORANGE_COLORS = { age3: '#F6B073', age4: '#C75B12' };
+    const BLUE_COLORS = { age3: '#48B7CE', age4: '#266782' };
+    let chartInstances = {};
+    let cutoffState = {};
+
+    function createChart(id, labels, age3Pcts, age4Pcts, colors, src) {
+      return new Chart(document.getElementById(`chart-${id}`), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Age 3', data: age3Pcts, backgroundColor: colors.age3, borderRadius: 4 },
+            { label: 'Age 4', data: age4Pcts, backgroundColor: colors.age4, borderRadius: 4 },
+          ],
+        },
+        options: {
+          responsive: true,
+          animation: { duration: 0 },
+          plugins: {
+            legend: {
+              title: { display: true, text: 'Student Age', font: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '600' }, padding: { bottom: 4 } },
+              labels: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 12 } }
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const ageKey = ctx.datasetIndex === 0 ? 'age3' : 'age4';
+                  const count = src[ageKey].counts[ctx.dataIndex];
+                  const total = src[ageKey].total;
+                  return `${ctx.dataset.label}: ${ctx.raw}% (${count} of ${total})`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: v => v + '%',
+                font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 }
+              },
+              grid: { color: '#f0f0f0' }
+            },
+            x: {
+              title: { display: true, text: 'Assessment Score (Performance Level)', font: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '600' }, padding: { top: 8 } },
+              ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } },
+              grid: { display: false }
+            }
+          },
+          layout: { padding: { top: 20 } },
+        },
+        plugins: [{
+          id: 'datalabels',
+          afterDraw(chart) {
+            const ctx2 = chart.ctx;
+            ctx2.font = "600 11px 'Plus Jakarta Sans', sans-serif";
+            ctx2.fillStyle = '#231f20';
+            ctx2.textAlign = 'center';
+            chart.data.datasets.forEach((dataset, di) => {
+              const meta = chart.getDatasetMeta(di);
+              meta.data.forEach((bar, i) => {
+                const val = dataset.data[i];
+                if (val > 0) ctx2.fillText(val + '%', bar.x, bar.y - 6);
+              });
+            });
+          }
+        }]
+      });
+    }
+
+    function renderCharts() {
+      Object.values(chartInstances).forEach(c => c.destroy());
+      chartInstances = {};
+      const container = document.getElementById('card-charts');
+      container.innerHTML = '';
+
+      for (const a of ASSESSMENTS) {
+        if (a.hasBlue && !cutoffState[a.id]) cutoffState[a.id] = 'orange';
+        const isBlue = a.hasBlue && cutoffState[a.id] === 'blue';
+        const src = isBlue ? a.blue : (a.hasBlue ? a.orange : a);
+        const levels = src.levels || a.levels;
+        const colors = isBlue ? BLUE_COLORS : ORANGE_COLORS;
+
+        const card = document.createElement('div');
+        card.className = 'chart-card';
+
+        let toggleHtml = '';
+        if (a.hasBlue) {
+          const oActive = !isBlue;
+          const bActive = isBlue;
+          toggleHtml = `<div style="display:inline-flex; gap:4px; margin-left:auto;">
+            <button onclick="switchCutoff('${a.id}','orange')" style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:11px; padding:3px 10px; border-radius:4px; cursor:pointer; border:1.5px solid #C75B12; background:${oActive?'#C75B12':'#fff'}; color:${oActive?'#fff':'#C75B12'}; transition:all .15s;">Orange Cutoffs</button>
+            <button onclick="switchCutoff('${a.id}','blue')" style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:11px; padding:3px 10px; border-radius:4px; cursor:pointer; border:1.5px solid #266782; background:${bActive?'#266782':'#fff'}; color:${bActive?'#fff':'#266782'}; transition:all .15s;">Blue Cutoffs</button>
+          </div>`;
+        }
+
+        card.id = 'card-wrap-' + a.id;
+        card.innerHTML = `<div style="display:flex; align-items:center; margin-bottom:8px;"><h3 style="margin:0">${a.name}</h3>${toggleHtml}</div><canvas id="chart-${a.id}"></canvas>`;
+        container.appendChild(card);
+
+        const labels = levels.map(l => LEVEL_LABELS[l]);
+        const age3Pcts = levels.map((_, i) => Math.round(src.age3.counts[i] / src.age3.total * 100));
+        const age4Pcts = levels.map((_, i) => Math.round(src.age4.counts[i] / src.age4.total * 100));
+
+        chartInstances[a.id] = createChart(a.id, labels, age3Pcts, age4Pcts, colors, src);
+      }
+    }
+
+    function switchCutoff(assessmentId, cutoff) {
+      cutoffState[assessmentId] = cutoff;
+      rebuildSingleChart(assessmentId);
+    }
+
+    function rebuildSingleChart(assessmentId) {
+      const a = ASSESSMENTS.find(x => x.id === assessmentId);
+      if (!a) return;
+
+      if (chartInstances[a.id]) chartInstances[a.id].destroy();
+
+      const isBlue = a.hasBlue && cutoffState[a.id] === 'blue';
+      const src = isBlue ? a.blue : (a.hasBlue ? a.orange : a);
+      const levels = src.levels || a.levels;
+      const colors = isBlue ? BLUE_COLORS : ORANGE_COLORS;
+
+      const card = document.getElementById('card-wrap-' + a.id);
+      const oActive = !isBlue;
+      const bActive = isBlue;
+      const toggleHtml = `<div style="display:inline-flex; gap:4px; margin-left:auto;">
+        <button onclick="switchCutoff('${a.id}','orange')" style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:11px; padding:3px 10px; border-radius:4px; cursor:pointer; border:1.5px solid #C75B12; background:${oActive?'#C75B12':'#fff'}; color:${oActive?'#fff':'#C75B12'}; transition:all .15s;">Orange Cutoffs</button>
+        <button onclick="switchCutoff('${a.id}','blue')" style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:11px; padding:3px 10px; border-radius:4px; cursor:pointer; border:1.5px solid #266782; background:${bActive?'#266782':'#fff'}; color:${bActive?'#fff':'#266782'}; transition:all .15s;">Blue Cutoffs</button>
+      </div>`;
+
+      card.innerHTML = `<div style="display:flex; align-items:center; margin-bottom:8px;"><h3 style="margin:0">${a.name}</h3>${toggleHtml}</div><canvas id="chart-${a.id}"></canvas>`;
+
+      const labels = levels.map(l => LEVEL_LABELS[l]);
+      const age3Pcts = levels.map((_, i) => Math.round(src.age3.counts[i] / src.age3.total * 100));
+      const age4Pcts = levels.map((_, i) => Math.round(src.age4.counts[i] / src.age4.total * 100));
+
+      chartInstances[a.id] = createChart(a.id, labels, age3Pcts, age4Pcts, colors, src);
     }
 
     renderCard('card-age3', 'age3');
