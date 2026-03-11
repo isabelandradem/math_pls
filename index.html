@@ -38,9 +38,10 @@
 
     .tab-bar {
       display: flex;
-      gap: 4px;
-      margin-bottom: 20px;
+      gap: 0;
+      margin-bottom: 0;
       max-width: 900px;
+      border-bottom: 1px solid #e9e9e9;
     }
 
     .tab {
@@ -48,26 +49,32 @@
       font-weight: 600;
       font-size: 14px;
       padding: 10px 20px;
-      border: none;
+      border: 1px solid transparent;
+      border-bottom: none;
       border-radius: 8px 8px 0 0;
       cursor: pointer;
-      background: #e9e9e9;
+      background: #f5f5f5;
       color: #6b6b6b;
       transition: background 0.15s, color 0.15s;
+      margin-bottom: -1px;
+      position: relative;
     }
 
-    .tab:hover { background: #ddd; }
+    .tab:hover { background: #eaeaea; }
 
     .tab.active {
       background: #fff;
       color: #231f20;
-      box-shadow: 0 -1px 4px rgba(0,0,0,0.06);
+      border-color: #e9e9e9;
+      border-bottom: 1px solid #fff;
+      z-index: 1;
     }
 
     .report-card {
       background: #fff;
       border: 1px solid #e9e9e9;
-      border-radius: 8px;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
       padding: 20px;
       width: 100%;
       max-width: 900px;
@@ -221,7 +228,7 @@
       { label: 'Age 2 Skills', key: '2YO', color: 'pink' },
       { label: 'Age 3 Skills', key: '3YO', color: 'purple' },
       { label: 'Age 4 Skills', key: '4YO', color: 'blue' },
-      { label: 'Kinder Skills', key: 'KG', color: 'teal' },
+      { label: 'KG Skills', key: 'KG', color: 'teal' },
     ];
 
     const ASSESSMENTS = [
@@ -347,8 +354,39 @@
       },
     ];
 
+    const PL_ORDER = { '2YO': 1, '3YO': 2, '4YO': 3, 'KG': 4 };
+    const PL_FROM_VAL = { 1: '2YO', 2: '3YO', 3: '4YO', 4: 'KG' };
+    let highlightMode = 'mode';
+
+    function getHighlightedKey(assessment, ageKey) {
+      const data = assessment[ageKey];
+      const levels = assessment.levels;
+      const counts = data.counts;
+      const total = data.total;
+
+      if (highlightMode === 'mode') {
+        const maxCount = Math.max(...counts);
+        return levels[counts.indexOf(maxCount)];
+      }
+      if (highlightMode === 'median') {
+        let cumulative = 0;
+        for (let i = 0; i < counts.length; i++) {
+          cumulative += counts[i];
+          if (cumulative >= total / 2) return levels[i];
+        }
+        return levels[levels.length - 1];
+      }
+      if (highlightMode === 'mean') {
+        const weightedSum = counts.reduce((s, c, i) => s + c * PL_ORDER[levels[i]], 0);
+        const meanVal = weightedSum / total;
+        return PL_FROM_VAL[Math.round(meanVal)];
+      }
+      return null;
+    }
+
     function getCells(assessment, ageKey) {
       const data = assessment[ageKey];
+      const hlKey = getHighlightedKey(assessment, ageKey);
       const cells = [];
 
       for (const col of COLUMNS) {
@@ -359,15 +397,11 @@
           const count = data.counts[idx];
           const total = data.total;
           const pct = total > 0 ? count / total : 0;
-          cells.push({ pct, count, total });
+          cells.push({ pct, count, total, highlighted: col.key === hlKey });
         }
       }
 
-      const maxPct = Math.max(...cells.filter(c => c !== null).map(c => c.pct));
-      return cells.map(c => {
-        if (c === null) return null;
-        return { ...c, highlighted: c.pct === maxPct && c.pct > 0 };
-      });
+      return cells;
     }
 
     function formatCell(cell, highlighted) {
@@ -378,11 +412,32 @@
       return `${pct}% (${cell.count} of ${cell.total})`;
     }
 
+    function renderAllCards() {
+      renderCard('card-age3', 'age3');
+      renderCard('card-age4', 'age4');
+      renderCard('card-total', 'combined');
+    }
+
+    function setHighlightMode(mode) {
+      highlightMode = mode;
+      renderAllCards();
+    }
+
     function renderCard(containerId, ageKey) {
       const el = document.getElementById(containerId);
       let html = '';
 
-      html += '<p style="font-size:12px; color:#6b6b6b; margin-bottom:12px; font-style:italic;">Performance levels calculated using Orange (default) cutoffs.</p>';
+      html += '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">';
+      html += '<p style="font-size:12px; color:#6b6b6b; margin:0; font-style:italic;">Performance levels calculated using Orange (default) cutoffs.</p>';
+      html += '<div style="display:flex; align-items:center; gap:8px;">';
+      html += '<span style="font-size:13px; font-weight:600; color:#231f20;">Highlight:</span>';
+      html += `<select onchange="setHighlightMode(this.value)" style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:12px; padding:5px 10px; border-radius:6px; border:1.5px solid #231f20; background:#fff; color:#231f20; cursor:pointer;">`;
+      for (const [key, label] of [['mode','Mode'],['median','Median'],['mean','Mean']]) {
+        html += `<option value="${key}"${highlightMode===key?' selected':''}>${label}</option>`;
+      }
+      html += '</select>';
+      html += '</div>';
+      html += '</div>';
 
       html += '<div class="header-row">';
       html += '  <div class="col-domain header-domain">Assessment Scale</div>';
@@ -438,7 +493,7 @@
       }
     }
 
-    const LEVEL_LABELS = { '2YO': 'Age 2 Skills', '3YO': 'Age 3 Skills', '4YO': 'Age 4 Skills', 'KG': 'Kinder Skills' };
+    const LEVEL_LABELS = { '2YO': 'Age 2 Skills', '3YO': 'Age 3 Skills', '4YO': 'Age 4 Skills', 'KG': 'KG Skills' };
     const ORANGE_COLORS = { age3: '#F6B073', age4: '#C75B12' };
     const BLUE_COLORS = { age3: '#48B7CE', age4: '#266782' };
     let chartInstances = {};
@@ -581,9 +636,7 @@
       chartInstances[a.id] = createChart(a.id, labels, age3Pcts, age4Pcts, colors, src);
     }
 
-    renderCard('card-age3', 'age3');
-    renderCard('card-age4', 'age4');
-    renderCard('card-total', 'combined');
+    renderAllCards();
   </script>
 </body>
 </html>
